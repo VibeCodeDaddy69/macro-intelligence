@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Intelligence v2.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  :root {
+    --bg: #0a0a0f; --bg2: #12121a; --bg3: #1a1a25; --bg4: #22222e;
+    --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.10);
+    --text: #eeeef0; --text2: #9d9db0; --text3: #5a5a6e;
+    --green: #34d399; --green2: #10b981; --green-bg: rgba(52,211,153,0.10); --green-glow: rgba(52,211,153,0.25);
+    --red: #fb7185; --red2: #f43f5e; --red-bg: rgba(251,113,133,0.10); --red-glow: rgba(251,113,133,0.25);
+    --yellow: #fbbf24; --yellow-bg: rgba(251,191,36,0.08);
+    --blue: #818cf8; --blue2: #6366f1; --blue-bg: rgba(129,140,248,0.10);
+    --purple: #c084fc; --purple-bg: rgba(192,132,252,0.10);
+    --orange: #fb923c; --orange-bg: rgba(251,146,60,0.10);
+    --cyan: #22d3ee; --cyan-bg: rgba(34,211,238,0.10);
+    --sidebar-w: 260px;
+    --glass: rgba(255,255,255,0.03);
+    --glass2: rgba(255,255,255,0.05);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; overflow-x: hidden; }
+
+  /* ── Sidebar ── */
+  .sidebar { width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 10; overflow-y: auto; overflow-x: hidden; transition: transform 0.3s ease; }
+  .sidebar-brand { padding: 22px 22px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+  .brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blue2), var(--purple)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+  .brand-text { font-size: 16px; font-weight: 700; letter-spacing: -0.4px; background: linear-gradient(135deg, var(--text), var(--text2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .brand-ver { font-size: 9px; font-weight: 600; color: var(--text3); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+
+  .sidebar-nav { padding: 14px 12px; flex: 1; overflow-y: auto; }
+  .nav-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); padding: 12px 12px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; margin-bottom: 2px; position: relative; }
+  .nav-item:hover { background: var(--glass2); color: var(--text); }
+  .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(192,132,252,0.08)); color: var(--text); border: 1px solid rgba(99,102,241,0.2); }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; background: var(--blue); border-radius: 0 3px 3px 0; }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; opacity: 0.7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-count { margin-left: auto; font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace; background: var(--glass2); padding: 2px 8px; border-radius: 8px; color: var(--text3); min-width: 28px; text-align: center; }
+  .nav-item.active .nav-count { background: rgba(99,102,241,0.2); color: var(--blue); }
+
+  .stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 11px; }
+  .stat-label { color: var(--text3); font-weight: 400; }
+  .stat-value { color: var(--text2); font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* ── Sidebar Footer (Stats + Sources) ── */
+  .sidebar-footer-info { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--border); opacity: 0.7; transition: opacity 0.2s; }
+  .sidebar-footer-info:hover { opacity: 1; }
+  .sfi-row { display: flex; justify-content: space-between; padding: 1px 0; }
+  .sfi-label { font-size: 9px; color: var(--text3); font-weight: 500; }
+  .sfi-val { font-size: 9px; color: var(--text2); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .sfi-divider { height: 1px; background: var(--border); margin: 5px 0; }
+  .sidebar-footer-info .source-row { padding: 1px 0; font-size: 9px; }
+  .sidebar-footer-info .source-row .dot { width: 5px; height: 5px; }
+  .sidebar-footer-info .source-row span:nth-child(2) { font-size: 9px; }
+  .source-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 11px; color: var(--text2); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ok { background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
+  .dot-stale { background: var(--yellow); box-shadow: 0 0 6px rgba(251,191,36,0.3); }
+  .dot-off { background: var(--text3); opacity: 0.5; }
+
+  /* ── Main ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; width: calc(100vw - var(--sidebar-w)); max-width: calc(100vw - var(--sidebar-w)); }
+
+  /* ── Ticker Bar ── */
+  /* ── Marquee Ticker ── */
+  .ticker-bar { position: relative; background: linear-gradient(180deg, var(--bg2), var(--bg)); border-bottom: 1px solid var(--border); min-height: 44px; overflow: hidden; }
+  .ticker-bar::before, .ticker-bar::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40px; z-index: 2; pointer-events: none; }
+  .ticker-bar::before { left: 0; background: linear-gradient(90deg, var(--bg2), transparent); }
+  .ticker-bar::after { right: 0; background: linear-gradient(-90deg, var(--bg), transparent); }
+  .ticker-track { display: flex; align-items: center; animation: marqueeScroll var(--marquee-dur, 30s) linear infinite; width: max-content; }
+  .ticker-track:hover { animation-play-state: paused; }
+  .ticker-item { display: flex; align-items: center; gap: 8px; padding: 10px 22px; white-space: nowrap; flex-shrink: 0; }
+  .ticker-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+  .ticker-label { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+  .ticker-price { font-size: 13px; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; transition: color 0.3s; }
+  .ticker-change { font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 1px 6px; border-radius: 4px; }
+  .ticker-up { color: var(--green); background: var(--green-bg); }
+  .ticker-down { color: var(--red); background: var(--red-bg); }
+  .ticker-flat { color: var(--text3); background: var(--glass); }
+  .ticker-logo { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; image-rendering: pixelated; }
+  .ticker-logo img { width: 100%; height: 100%; border-radius: 50%; display: block; }
+  .ticker-sparkline { width: 40px; height: 16px; }
+  @keyframes marqueeScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  /* ── Top bar ── */
+  .topbar { padding: 28px 36px 0; }
+  .topbar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .topbar h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .regime-pill { padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+  .regime-bullish { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+  .regime-bearish { background: var(--red-bg); color: var(--red); border: 1px solid rgba(251,113,133,0.2); }
+  .regime-neutral { background: var(--glass2); color: var(--text3); border: 1px solid var(--border); }
+  .sentiment-chip { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; background: var(--glass); color: var(--text2); border: 1px solid var(--border); }
+  .ws-chip { padding: 5px 10px; border-radius: 16px; font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace; border: 1px solid var(--border); cursor: default; }
+  .ws-connected { color: var(--green); background: var(--green-bg); border-color: rgba(52,211,153,0.2); }
+  .ws-disconnected { color: var(--text3); background: var(--glass); }
+  .sound-btn { padding: 5px 10px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s; }
+  .sound-btn.active { color: var(--yellow); border-color: rgba(251,191,36,0.3); background: var(--yellow-bg); }
+  .filter-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .filter-btn { padding: 7px 18px; border-radius: 10px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px; }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text2); background: var(--glass); }
+  .filter-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 700; }
+  .filter-btn-hot { border-color: rgba(251,146,60,0.3); }
+  .filter-btn-hot.active { background: var(--orange); color: #000; border-color: var(--orange); }
+  .filter-btn-rising { border-color: rgba(192,132,252,0.3); }
+  .filter-btn-rising.active { background: var(--purple); color: #000; border-color: var(--purple); }
+  .search-input { padding: 7px 14px; border-radius: 10px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: var(--glass); color: var(--text); outline: none; width: 180px; font-family: 'Inter', sans-serif; transition: border-color 0.2s; margin-left: auto; }
+  .search-input:focus { border-color: var(--blue); }
+  .search-input::placeholder { color: var(--text3); }
+
+  /* ── Stats panel ── */
+  .stats-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin: 0 36px 20px; }
+  .stats-panel-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .stats-panel-title { font-size: 13px; font-weight: 600; color: var(--text2); }
+  .stats-panel-toggle { font-size: 11px; color: var(--text3); }
+  .stats-panel-body { display: none; margin-top: 16px; }
+  .stats-panel-body.open { display: block; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stats-card { background: var(--glass2); border-radius: 10px; padding: 12px; }
+  .stats-card-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 4px; }
+  .stats-card-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .event-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .event-bar-label { font-size: 11px; color: var(--text2); width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .event-bar-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .event-bar-fill { height: 100%; border-radius: 3px; background: var(--blue); transition: width 0.5s; }
+  .event-bar-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; width: 28px; text-align: right; }
+
+  /* ── Feed ── */
+  .feed { padding: 0 36px 40px; flex: 1; }
+  .signal-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 0; margin-bottom: 10px; transition: all 0.2s ease; overflow: hidden; display: flex; }
+  .signal-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .card-accent { width: 4px; flex-shrink: 0; border-radius: 14px 0 0 14px; }
+  .card-accent-bullish { background: linear-gradient(180deg, var(--green), var(--green2)); }
+  .card-accent-bearish { background: linear-gradient(180deg, var(--red), var(--red2)); }
+  .card-accent-neutral { background: var(--text3); opacity: 0.3; }
+  .card-inner { padding: 20px 24px; flex: 1; min-width: 0; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; gap: 16px; }
+  .card-title { font-size: 15px; font-weight: 600; line-height: 1.45; letter-spacing: -0.2px; flex: 1; }
+  .card-time { font-size: 12px; color: var(--text3); white-space: nowrap; flex-shrink: 0; padding-top: 2px; font-family: 'JetBrains Mono', monospace; font-weight: 400; }
+
+  .card-body { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; word-break: break-word; }
+  .card-headline { font-size: 11px; color: var(--text3); line-height: 1.5; margin-bottom: 14px; padding-left: 10px; border-left: 2px solid var(--border); }
+
+  .card-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tag { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+  .tag-bullish { background: var(--green-bg); color: var(--green); }
+  .tag-bearish { background: var(--red-bg); color: var(--red); }
+  .tag-neutral { background: var(--glass); color: var(--text3); }
+  .tag-impact-high { background: rgba(251,113,133,0.15); color: var(--red); border: 1px solid rgba(251,113,133,0.15); }
+  .tag-impact-med { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(251,191,36,0.1); }
+  .tag-impact-low { background: var(--glass); color: var(--text3); border: 1px solid var(--border); }
+  .tag-cat { background: var(--glass2); color: var(--text2); }
+  .tag-source { font-weight: 600; }
+  .tag-src-news { background: var(--blue-bg); color: var(--blue); }
+  .tag-src-poly { background: var(--orange-bg); color: var(--orange); }
+  .tag-src-tg { background: var(--purple-bg); color: var(--purple); }
+  .tag-src-opennews { background: var(--cyan-bg); color: var(--cyan); }
+  .tag-src-finnhub { background: rgba(129,140,248,0.12); color: var(--blue); }
+  .tag-src-fred { background: var(--yellow-bg); color: var(--yellow); }
+  .tag-src-cryptopanic { background: rgba(251,146,60,0.12); color: var(--orange); }
+  .tag-src-rss { background: rgba(34,211,238,0.08); color: var(--cyan); }
+  .tag-token { background: linear-gradient(135deg, rgba(34,211,238,0.15), rgba(99,102,241,0.15)); color: var(--cyan); font-weight: 700; padding: 3px 8px; border: 1px solid rgba(34,211,238,0.15); }
+  .tag-latency { font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 6px; background: var(--glass); color: var(--text3); border: 1px solid var(--border); }
+
+  .card-meta { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); }
+  .card-meta span { display: flex; align-items: center; gap: 4px; }
+  .meta-sender { color: var(--text2); font-weight: 500; }
+
+  /* ── Vote buttons ── */
+  .vote-wrap { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+  .vote-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; font-size: 12px; cursor: pointer; color: var(--text3); transition: all 0.15s; line-height: 1; }
+  .vote-btn:hover { border-color: var(--border2); color: var(--text); }
+  .vote-btn.voted-up { color: var(--green); border-color: rgba(52,211,153,0.3); background: var(--green-bg); }
+  .vote-btn.voted-down { color: var(--red); border-color: rgba(251,113,133,0.3); background: var(--red-bg); }
+  .vote-count { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text3); min-width: 14px; text-align: center; }
+
+  /* ── FNG Widget ── */
+  .fng-widget { padding: 16px 14px 14px; margin: 0 8px; background: var(--bg3); border-radius: 14px; border: 1px solid var(--border); }
+  .fng-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .fng-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
+  .fng-label-pill { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 5px; }
+  .fng-hero { display: flex; align-items: baseline; gap: 6px; margin-bottom: 12px; }
+  .fng-value { font-size: 42px; font-weight: 800; line-height: 1; font-family: 'JetBrains Mono', monospace; letter-spacing: -2px; }
+  .fng-out-of { font-size: 14px; color: var(--text3); font-weight: 500; }
+  .fng-bar-wrap { margin-bottom: 14px; }
+  .fng-bar { width: 100%; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #fb7185 0%, #fb923c 30%, #fbbf24 50%, #a3e635 70%, #34d399 100%); position: relative; }
+  .fng-bar-marker { position: absolute; top: -4px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--bg3); box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: left 0.6s ease; }
+  .fng-scale { display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .fng-history { display: flex; gap: 2px; justify-content: space-between; }
+  .fng-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .fng-day-bar { width: 100%; height: 24px; border-radius: 3px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #000; font-family: 'JetBrains Mono', monospace; transition: opacity 0.2s; }
+  .fng-day-label { font-size: 8px; color: var(--text3); }
+
+  /* ── Poly sidebar ── */
+  .widget-section { padding: 12px 8px; }
+  .widget-title { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text3); letter-spacing: 1px; padding: 0 8px 10px; }
+  .poly-card { padding: 8px 10px; border-radius: 8px; margin-bottom: 3px; transition: background 0.15s; }
+  .poly-card:hover { background: var(--glass2); }
+  .poly-q { font-size: 11px; color: var(--text2); line-height: 1.45; margin-bottom: 6px; }
+  .poly-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .poly-bar { flex: 1; height: 3px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .poly-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .poly-pct { font-size: 11px; font-weight: 700; width: 36px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── FRED Widget ── */
+  .fred-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 6px; margin-bottom: 1px; transition: background 0.15s; }
+  .fred-row:hover { background: var(--glass2); }
+  .fred-label { font-size: 10px; color: var(--text2); flex: 1; font-weight: 500; }
+  .fred-val { font-size: 11px; font-weight: 600; color: var(--text); margin-left: 8px; font-family: 'JetBrains Mono', monospace; }
+  .fred-change { font-size: 10px; font-weight: 600; margin-left: 6px; width: 48px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+  .fred-up { color: var(--green); }
+  .fred-down { color: var(--red); }
+  .fred-flat { color: var(--text3); }
+
+  /* ── Empty ── */
+  .empty-state { text-align: center; padding: 100px 40px; }
+  .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.15; }
+  .empty-text { font-size: 15px; color: var(--text3); font-weight: 500; }
+  .empty-sub { font-size: 13px; color: var(--text3); margin-top: 8px; opacity: 0.6; }
+
+  /* ── View Toggle ── */
+  .view-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-left: 16px; background: var(--bg2); }
+  .view-tab { padding: 5px 16px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; color: var(--text3); background: transparent; border: none; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
+  .view-tab:hover { color: var(--text2); background: var(--glass); }
+  .view-tab.active { color: #fff; background: var(--blue2); box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+
+  /* ── Visibility classes ── */
+  body.view-signals .on-only { display: none !important; }
+  body.view-opennews .sig-only { display: none !important; }
+
+  /* ── Score Badge ── */
+  .score-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 22px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 0 5px; flex-shrink: 0; }
+  .score-badge.high { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+  .score-badge.mid { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .score-badge.low { background: var(--glass2); color: var(--text3); border: 1px solid var(--border); }
+  .score-badge.none { background: var(--glass); color: var(--text3); border: 1px solid var(--border); font-size: 9px; }
+
+  /* ── OpenNews Metrics Bar ── */
+  .on-metrics-bar { display: flex; gap: 0; padding: 0; margin: 0 36px 14px; border: 1px solid var(--border); border-radius: 8px; background: linear-gradient(135deg, var(--bg2), rgba(99,102,241,0.03)); overflow-x: auto; }
+  .on-metric { padding: 10px 16px; border-right: 1px solid var(--border); flex: 1; min-width: 0; text-align: center; }
+  .on-metric:last-child { border-right: none; }
+  .on-metric-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 1px; }
+  .on-metric-value { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+  /* ── OpenNews Engine Tabs + Signal Filters ── */
+  .on-filter-bar { display: flex; align-items: center; gap: 5px; padding: 0 36px; margin-bottom: 14px; flex-wrap: wrap; }
+  .on-engine-tab { padding: 5px 12px; border-radius: 6px; font-size: 10px; font-weight: 700; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.8px; }
+  .on-engine-tab:hover { border-color: var(--border2); color: var(--text2); background: var(--glass); }
+  .on-engine-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+  .on-signal-btn { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; border: 1px solid var(--border); background: transparent; cursor: pointer; transition: all 0.2s; }
+  .on-signal-btn.long { color: var(--green); border-color: rgba(52,211,153,0.15); }
+  .on-signal-btn.long:hover { background: rgba(52,211,153,0.08); }
+  .on-signal-btn.short { color: var(--red); border-color: rgba(251,113,133,0.15); }
+  .on-signal-btn.short:hover { background: rgba(251,113,133,0.08); }
+  .on-signal-btn.neutral { color: var(--text3); }
+  .on-signal-btn.active.long { background: var(--green); color: #fff; border-color: var(--green); }
+  .on-signal-btn.active.short { background: var(--red); color: #fff; border-color: var(--red); }
+  .on-signal-btn.active.neutral { background: var(--text3); color: var(--bg); border-color: var(--text3); }
+  .on-score-range { display: flex; align-items: center; gap: 5px; margin-left: 6px; font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .on-score-range input[type=range] { width: 70px; accent-color: var(--blue); height: 3px; }
+  .on-lang-toggle { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; margin-left: 4px; }
+  .on-lang-toggle:hover { border-color: var(--border2); color: var(--text2); background: var(--glass); }
+  .on-lang-toggle.zh { background: var(--orange); color: #fff; border-color: var(--orange); box-shadow: 0 2px 8px rgba(251,146,60,0.3); }
+
+  /* ── OpenNews Article Card ── */
+  .on-article { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 4px; transition: all 0.15s; animation: fadeSlideIn 0.3s ease both; cursor: default; border-left: 2px solid transparent; }
+  .on-article:hover { border-color: var(--border2); background: rgba(18,18,26,0.9); }
+  .on-article.high-score { border-left: 2px solid var(--green); background: linear-gradient(90deg, rgba(52,211,153,0.04), transparent 40%); }
+  .on-article.high-score:hover { box-shadow: 0 0 12px rgba(52,211,153,0.08); }
+  .on-article-top { display: flex; align-items: flex-start; gap: 8px; }
+  .on-article-text { font-size: 12.5px; font-weight: 500; line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text); }
+  .on-article-text.expanded { -webkit-line-clamp: unset; }
+  .on-article-time { font-size: 9px; color: var(--text3); white-space: nowrap; font-family: 'JetBrains Mono', monospace; padding-top: 3px; }
+  .on-article-meta { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .on-expand-btn { background: none; border: none; color: var(--blue); font-size: 10px; font-weight: 600; cursor: pointer; padding: 1px 0; margin-top: 2px; opacity: 0.8; }
+  .on-expand-btn:hover { text-decoration: underline; opacity: 1; }
+  .on-engine-tag { padding: 1px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+  .on-engine-tag.news { background: var(--blue-bg); color: var(--blue); }
+  .on-engine-tag.listing { background: var(--green-bg); color: var(--green); }
+  .on-engine-tag.onchain { background: var(--purple-bg); color: var(--purple); }
+  .on-engine-tag.meme { background: var(--orange-bg); color: var(--orange); }
+  .on-engine-tag.market { background: var(--cyan-bg); color: var(--cyan); }
+  .on-engine-tag.prediction { background: var(--yellow-bg); color: var(--yellow); }
+  .on-coin-pill { padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; background: rgba(34,211,238,0.08); color: var(--cyan); border: 1px solid rgba(34,211,238,0.1); font-family: 'JetBrains Mono', monospace; }
+  .on-summary { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5; padding-left: 8px; border-left: 2px solid var(--border); font-style: italic; }
+  .on-signal-tag { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .on-signal-tag.long { background: var(--green-bg); color: var(--green); }
+  .on-signal-tag.short { background: var(--red-bg); color: var(--red); }
+  .on-signal-tag.neutral { background: var(--glass); color: var(--text3); }
+
+  /* ── Intelligence Panels ── */
+  .on-intel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; padding: 0 36px; margin: 20px 0 16px 0; padding: 0 36px; }
+  .on-intel-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; max-height: 280px; overflow-y: auto; }
+  .on-intel-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .on-dist-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .on-dist-label { font-size: 10px; color: var(--text3); width: 40px; font-family: 'JetBrains Mono', monospace; }
+  .on-dist-track { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .on-dist-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .on-dist-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; width: 28px; text-align: right; }
+  .on-coin-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .on-coin-sym { font-size: 11px; font-weight: 700; color: var(--cyan); width: 60px; }
+  .on-coin-bar { flex: 1; height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .on-coin-fill { height: 100%; border-radius: 3px; background: var(--cyan); transition: width 0.5s; }
+  .on-coin-count { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; width: 24px; text-align: right; }
+  .on-intel-item { padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .on-intel-item:last-child { border-bottom: none; }
+
+  /* ── Source Grid ── */
+  .on-source-grid { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 36px; margin-bottom: 20px; }
+  .on-source-dot { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .on-source-dot .dot { width: 6px; height: 6px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+  /* ── Hamburger (mobile) ── */
+  .hamburger { display: none; position: fixed; top: 14px; left: 14px; z-index: 20; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--text); font-size: 18px; line-height: 1; }
+
+  /* ── Animations ── */
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulseGlow { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+  @keyframes livePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.4); } 50% { box-shadow: 0 0 0 4px rgba(52,211,153,0); } }
+  @keyframes scanLine { 0% { left: -20%; } 100% { left: 120%; } }
+  @keyframes flashIn { 0% { background: rgba(99,102,241,0.15); } 100% { background: transparent; } }
+  @keyframes borderGlow { 0%,100% { border-left-color: var(--green); box-shadow: -2px 0 8px rgba(52,211,153,0.15); } 50% { border-left-color: rgba(52,211,153,0.4); box-shadow: -2px 0 4px rgba(52,211,153,0); } }
+  @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes countUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+  @keyframes priceFlash { 0% { color: var(--yellow); } 100% { color: inherit; } }
+
+  /* Radar scan line across topbar */
+  .topbar { position: relative; overflow: hidden; }
+  .topbar::after { content: ''; position: absolute; top: 0; left: -20%; width: 20%; height: 100%; background: linear-gradient(90deg, transparent, rgba(99,102,241,0.04), rgba(99,102,241,0.08), rgba(99,102,241,0.04), transparent); animation: scanLine 8s ease-in-out infinite; pointer-events: none; z-index: 0; }
+
+  /* Live connection pulse dot */
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 4px; vertical-align: middle; animation: livePulse 2s ease-in-out infinite; }
+  .live-dot.off { background: var(--red); animation: none; }
+
+  /* Signal cards */
+  .signal-card { animation: fadeSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  .signal-card:nth-child(1) { animation-delay: 0s; }
+  .signal-card:nth-child(2) { animation-delay: 0.04s; }
+  .signal-card:nth-child(3) { animation-delay: 0.08s; }
+  .signal-card:nth-child(4) { animation-delay: 0.12s; }
+  .signal-card:nth-child(5) { animation-delay: 0.16s; }
+  .card-new { animation: flashIn 1.5s ease-out both, fadeSlideIn 0.5s cubic-bezier(0.16,1,0.3,1) both; box-shadow: 0 0 20px rgba(99,102,241,0.15); }
+
+  /* High-score article breathing glow */
+  .on-article.high-score { animation: fadeSlideIn 0.3s ease both, borderGlow 3s ease-in-out infinite; }
+
+  /* Price flash when value changes */
+  .ticker-price.flash { animation: priceFlash 0.6s ease-out; }
+
+  /* Metric value pop animation */
+  .on-metric-value.updated { animation: countUp 0.3s ease-out; }
+
+  /* Source dots breathing */
+  .sidebar-footer-info .dot-ok { animation: livePulse 2.5s ease-in-out infinite; }
+
+  /* Nav count badge pop */
+  .nav-count.updated { animation: countUp 0.25s ease-out; }
+
+  .ticker-item { transition: background 0.2s, opacity 0.3s; }
+  .poly-fill { transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+  .fng-bar-marker { transition: left 0.8s cubic-bezier(0.16,1,0.3,1), background 0.4s, box-shadow 0.4s; }
+  .fng-value { transition: color 0.4s ease; }
+  .smooth-update { transition: opacity 0.2s ease; }
+  .smooth-update.updating { opacity: 0.6; }
+
+  /* Intel panel staggered entrance */
+  .on-intel-panel { animation: slideInLeft 0.4s ease both; }
+  .on-intel-panel:nth-child(1) { animation-delay: 0.05s; }
+  .on-intel-panel:nth-child(2) { animation-delay: 0.1s; }
+  .on-intel-panel:nth-child(3) { animation-delay: 0.15s; }
+  .on-intel-panel:nth-child(4) { animation-delay: 0.2s; }
+  .on-intel-panel:nth-child(5) { animation-delay: 0.25s; }
+  .on-intel-panel:nth-child(6) { animation-delay: 0.3s; }
+
+  /* ── Mobile Responsive ── */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .hamburger { display: block; }
+    .main { margin-left: 0; }
+    .topbar { padding: 20px 16px 0; }
+    .topbar-header { flex-wrap: wrap; gap: 8px; }
+    .feed { padding: 0 16px 40px; }
+    .ticker-bar { min-height: 38px; }
+    .ticker-item { padding: 8px 12px; }
+    .filter-bar { flex-wrap: wrap; }
+    .search-input { width: 100%; margin-left: 0; margin-top: 6px; }
+    .stats-panel { margin: 0 16px 16px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .card-inner { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">M</div>
+      <span class="brand-text" data-i18n="brand">Macro Intelligence</span>
+      <span class="brand-ver">v2.0</span>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-label" data-i18n="nav_sources">Sources</div>
+      <div class="nav-item active" onclick="setFilter('all', this)">
+        <span class="nav-icon">&#9670;</span> <span data-i18n="nav_all">All Signals</span>
+        <span class="nav-count" id="nav-all">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('newsnow', this)">
+        <span class="nav-icon">&#9673;</span> NewsNow
+        <span class="nav-count" id="nav-news">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('finnhub', this)">
+        <span class="nav-icon">&#9673;</span> Finnhub
+        <span class="nav-count" id="nav-finnhub">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('opennews', this)">
+        <span class="nav-icon">&#9673;</span> OpenNews
+        <span class="nav-count" id="nav-opennews">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('cryptopanic', this)">
+        <span class="nav-icon">&#9673;</span> CryptoPanic
+        <span class="nav-count" id="nav-cryptopanic">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('rss', this)">
+        <span class="nav-icon">&#9673;</span> RSS
+        <span class="nav-count" id="nav-rss">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('polymarket', this)">
+        <span class="nav-icon">&#9673;</span> Polymarket
+        <span class="nav-count" id="nav-poly">0</span>
+      </div>
+      <div class="nav-item" onclick="setFilter('telegram', this)">
+        <span class="nav-icon">&#9673;</span> Telegram
+        <span class="nav-count" id="nav-tg">0</span>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <!-- Fear & Greed -->
+      <div class="fng-widget" id="fng-widget">
+        <div class="fng-header">
+          <div class="fng-title" data-i18n="fng_title">Fear & Greed</div>
+          <div class="fng-label-pill" id="fng-label">--</div>
+        </div>
+        <div class="fng-hero">
+          <div class="fng-value" id="fng-value">--</div>
+          <div class="fng-out-of">/ 100</div>
+        </div>
+        <div class="fng-bar-wrap">
+          <div class="fng-bar">
+            <div class="fng-bar-marker" id="fng-marker" style="left:50%"></div>
+          </div>
+          <div class="fng-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+        </div>
+        <div class="fng-history" id="fng-history"></div>
+      </div>
+
+      <div style="height:10px"></div>
+      <div class="widget-section">
+        <div class="widget-title" data-i18n="nav_prediction_markets">Prediction Markets</div>
+        <div id="poly-sidebar"></div>
+      </div>
+
+      <div class="widget-section" id="fred-section" style="display:none">
+        <div class="widget-title" data-i18n="nav_macro_fred">Macro Indicators (FRED)</div>
+        <div id="fred-sidebar"></div>
+      </div>
+
+      <!-- Stats & Sources (low priority, bottom) -->
+      <div class="sidebar-footer-info">
+        <div class="sfi-row"><span class="sfi-label" data-i18n="sfi_proc">Proc</span><span class="sfi-val" id="st-proc">0</span></div>
+        <div class="sfi-row"><span class="sfi-label" data-i18n="sfi_signals">Signals</span><span class="sfi-val" id="st-sig">0</span></div>
+        <div class="sfi-row"><span class="sfi-label">LLM</span><span class="sfi-val" id="st-llm">0</span></div>
+        <div class="sfi-row"><span class="sfi-label" data-i18n="sfi_up">Up</span><span class="sfi-val" id="st-up">0m</span></div>
+        <div class="sfi-row"><span class="sfi-label">WS</span><span class="sfi-val" id="st-ws">~</span></div>
+        <div class="sfi-divider"></div>
+        <div id="source-status"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="ticker-bar" id="ticker-bar"></div>
+    <div class="topbar">
+      <div class="topbar-header">
+        <h1 data-i18n="radar">Radar</h1>
+        <div class="view-toggle">
+          <button class="view-tab active" id="vt-signals" onclick="setViewMode('signals')" data-i18n="tab_signals">SIGNALS</button>
+          <button class="view-tab" id="vt-opennews" onclick="setViewMode('opennews')"><span data-i18n="tab_opennews">OPENNEWS</span> <span id="on-tab-count" style="font-size:9px;opacity:0.6;margin-left:2px"></span></button>
+        </div>
+        <div class="topbar-right">
+          <span class="ws-chip ws-disconnected" id="ws-chip"><span class="live-dot off" id="live-dot"></span><span data-i18n="ws_off">WS OFF</span></span>
+          <button class="on-lang-toggle" id="lang-btn" onclick="toggleLang()" title="中文 / English">EN</button>
+          <button class="sound-btn" id="sound-btn" onclick="toggleSound()" title="Sound alerts for high-impact signals">&#9834;</button>
+          <span class="regime-pill regime-neutral" id="regime-pill">NEUTRAL</span>
+          <span class="sentiment-chip" id="sentiment-chip">0.000</span>
+        </div>
+      </div>
+      <div class="filter-bar sig-only">
+        <button class="filter-btn active" onclick="setDirection('all', this)" data-i18n="filter_all">ALL</button>
+        <button class="filter-btn" onclick="setDirection('bullish', this)" data-i18n="filter_bullish">BULLISH</button>
+        <button class="filter-btn" onclick="setDirection('bearish', this)" data-i18n="filter_bearish">BEARISH</button>
+        <button class="filter-btn filter-btn-hot" id="btn-hot" onclick="toggleHot()" data-i18n="filter_hot">HOT</button>
+        <button class="filter-btn filter-btn-rising" id="btn-rising" onclick="toggleRising()" data-i18n="filter_rising">RISING</button>
+        <input class="search-input" id="search-input" type="text" placeholder="Search signals..." data-i18n="search_signals" oninput="onSearch(this.value)">
+      </div>
+    </div>
+
+    <!-- Stats panel -->
+    <div class="stats-panel sig-only" id="stats-panel">
+      <div class="stats-panel-header" onclick="toggleStats()">
+        <span class="stats-panel-title" data-i18n="todays_stats">Today's Stats</span>
+        <span class="stats-panel-toggle" id="stats-toggle">&#9660; <span data-i18n="expand">expand</span></span>
+      </div>
+      <div class="stats-panel-body" id="stats-body">
+        <div class="stats-grid" id="stats-grid"></div>
+        <div id="event-bars"></div>
+      </div>
+    </div>
+
+    <!-- ── OpenNews Metrics Bar (on-only) ── -->
+    <div class="on-metrics-bar on-only" id="on-metrics-bar">
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_avg_score">Avg Score</div><div class="on-metric-value" id="on-m-avg">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_long">Long %</div><div class="on-metric-value" id="on-m-long" style="color:var(--green)">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_short">Short %</div><div class="on-metric-value" id="on-m-short" style="color:var(--red)">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_neutral">Neutral %</div><div class="on-metric-value" id="on-m-neutral">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_top_coin">Top Coin</div><div class="on-metric-value" id="on-m-topcoin" style="color:var(--cyan)">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_velocity">Velocity</div><div class="on-metric-value" id="on-m-velocity">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_high_pct">High %</div><div class="on-metric-value" id="on-m-highpct">--</div></div>
+      <div class="on-metric"><div class="on-metric-label" data-i18n="m_articles">Articles</div><div class="on-metric-value" id="on-m-count">--</div></div>
+    </div>
+
+    <!-- ── OpenNews Filter Bar (on-only) ── -->
+    <div class="on-filter-bar on-only" id="on-filter-bar">
+      <button class="on-engine-tab active" onclick="setOnEngine('', this)" data-i18n="filter_all">ALL</button>
+      <button class="on-engine-tab" onclick="setOnEngine('news', this)" data-i18n="on_news">NEWS</button>
+      <button class="on-engine-tab" onclick="setOnEngine('listing', this)" data-i18n="on_listing">LISTING</button>
+      <button class="on-engine-tab" onclick="setOnEngine('onchain', this)" data-i18n="on_onchain">ONCHAIN</button>
+      <button class="on-engine-tab" onclick="setOnEngine('meme', this)" data-i18n="on_meme">MEME</button>
+      <button class="on-engine-tab" onclick="setOnEngine('market', this)" data-i18n="on_market">MARKET</button>
+      <button class="on-engine-tab" onclick="setOnEngine('prediction', this)" data-i18n="on_predict">PREDICT</button>
+      <span style="width:1px;height:20px;background:var(--border);margin:0 4px"></span>
+      <button class="on-signal-btn long" id="on-sig-long" onclick="setOnSignal('long')" data-i18n="on_long">LONG</button>
+      <button class="on-signal-btn short" id="on-sig-short" onclick="setOnSignal('short')" data-i18n="on_short">SHORT</button>
+      <button class="on-signal-btn neutral" id="on-sig-neutral" onclick="setOnSignal('neutral')" data-i18n="on_neutral">NEUTRAL</button>
+      <div class="on-score-range">
+        <span data-i18n="on_score_gte">Score &ge;</span>
+        <input type="range" min="0" max="100" value="0" id="on-score-slider" oninput="onOnScoreChange(this.value)">
+        <span id="on-score-val">0</span>
+      </div>
+      <input class="search-input" style="margin-left:auto" type="text" placeholder="Search articles..." data-i18n="search_articles" oninput="onOnSearch(this.value)" id="on-search">
+    </div>
+
+    <div class="feed sig-only" id="feed"></div>
+
+    <!-- ── OpenNews Article Feed (on-only) ── -->
+    <div class="feed on-only" id="on-feed"></div>
+
+    <!-- ── Intelligence Panels (on-only) ── -->
+    <div class="on-section-label on-only" style="padding:0 36px;margin:16px 0 8px"><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);border-left:2px solid var(--blue);padding-left:8px" data-i18n="sec_intelligence">Intelligence</span></div>
+    <div class="on-intel-grid on-only" id="on-intel-grid">
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_score_dist">Score Distribution</div>
+        <div id="on-score-dist"></div>
+      </div>
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_hot_coins">Hot Coins</div>
+        <div id="on-hot-coins"></div>
+      </div>
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_predictions">Predictions</div>
+        <div id="on-intel-predictions"></div>
+      </div>
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_listings">Listings</div>
+        <div id="on-intel-listings"></div>
+      </div>
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_onchain">On-Chain</div>
+        <div id="on-intel-onchain"></div>
+      </div>
+      <div class="on-intel-panel">
+        <div class="on-intel-title" data-i18n="intel_market">Market Anomalies</div>
+        <div id="on-intel-market"></div>
+      </div>
+    </div>
+
+    <!-- ── Source Health Grid (on-only) ── -->
+    <div class="on-section-label on-only" style="padding:0 36px;margin:14px 0 6px"><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);border-left:2px solid var(--cyan);padding-left:8px" data-i18n="sec_source_health">Source Health</span></div>
+    <div class="on-source-grid on-only" id="on-source-grid"></div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  i18n — English / Chinese language system
+// ══════════════════════════════════════════════════════════════════
+let uiLang = localStorage.getItem('mi_lang') || 'en';
+
+const I18N = {
+  // Sidebar
+  brand: { en: 'Macro Intelligence', zh: '宏观情报' },
+  nav_sources: { en: 'Sources', zh: '数据源' },
+  nav_all: { en: 'All Signals', zh: '全部信号' },
+  nav_prediction_markets: { en: 'Prediction Markets', zh: '预测市场' },
+  nav_macro_fred: { en: 'Macro Indicators (FRED)', zh: '宏观指标 (FRED)' },
+  fng_title: { en: 'Fear & Greed', zh: '恐惧与贪婪' },
+  // Sidebar footer
+  sfi_proc: { en: 'Proc', zh: '已处理' },
+  sfi_signals: { en: 'Signals', zh: '信号' },
+  sfi_up: { en: 'Up', zh: '运行' },
+  // Topbar
+  radar: { en: 'Radar', zh: '雷达' },
+  tab_signals: { en: 'SIGNALS', zh: '信号' },
+  tab_opennews: { en: 'OPENNEWS', zh: '开放新闻' },
+  ws_on: { en: 'WS ON', zh: 'WS 连接' },
+  ws_off: { en: 'WS OFF', zh: 'WS 断开' },
+  sound_title: { en: 'Sound alerts for high-impact signals', zh: '高影响信号声音提醒' },
+  // Signal filters
+  filter_all: { en: 'ALL', zh: '全部' },
+  filter_bullish: { en: 'BULLISH', zh: '看多' },
+  filter_bearish: { en: 'BEARISH', zh: '看空' },
+  filter_hot: { en: 'HOT', zh: '热门' },
+  filter_rising: { en: 'RISING', zh: '上升' },
+  search_signals: { en: 'Search signals...', zh: '搜索信号...' },
+  // Stats panel
+  todays_stats: { en: "Today's Stats", zh: '今日统计' },
+  expand: { en: 'expand', zh: '展开' },
+  collapse: { en: 'collapse', zh: '收起' },
+  stat_today: { en: 'Today', zh: '今日' },
+  stat_bullish: { en: 'Bullish', zh: '看多' },
+  stat_bearish: { en: 'Bearish', zh: '看空' },
+  stat_sources: { en: 'Sources', zh: '源数' },
+  top_events: { en: 'Top Event Types', zh: '热门事件类型' },
+  // OpenNews metrics
+  m_avg_score: { en: 'Avg Score', zh: '平均分' },
+  m_long: { en: 'Long %', zh: '多头%' },
+  m_short: { en: 'Short %', zh: '空头%' },
+  m_neutral: { en: 'Neutral %', zh: '中性%' },
+  m_top_coin: { en: 'Top Coin', zh: '热门币' },
+  m_velocity: { en: 'Velocity', zh: '速率' },
+  m_high_pct: { en: 'High %', zh: '高分%' },
+  m_articles: { en: 'Articles', zh: '文章数' },
+  // OpenNews filters
+  on_news: { en: 'NEWS', zh: '新闻' },
+  on_listing: { en: 'LISTING', zh: '上线' },
+  on_onchain: { en: 'ONCHAIN', zh: '链上' },
+  on_meme: { en: 'MEME', zh: 'MEME' },
+  on_market: { en: 'MARKET', zh: '市场' },
+  on_predict: { en: 'PREDICT', zh: '预测' },
+  on_long: { en: 'LONG', zh: '多' },
+  on_short: { en: 'SHORT', zh: '空' },
+  on_neutral: { en: 'NEUTRAL', zh: '中性' },
+  on_score_gte: { en: 'Score ≥', zh: '评分 ≥' },
+  search_articles: { en: 'Search articles...', zh: '搜索文章...' },
+  // OpenNews sections
+  sec_intelligence: { en: 'Intelligence', zh: '情报分析' },
+  sec_source_health: { en: 'Source Health', zh: '数据源状态' },
+  // Intel panels
+  intel_score_dist: { en: 'Score Distribution', zh: '评分分布' },
+  intel_hot_coins: { en: 'Hot Coins', zh: '热门币种' },
+  intel_predictions: { en: 'Predictions', zh: '预测' },
+  intel_listings: { en: 'Listings', zh: '上线信息' },
+  intel_onchain: { en: 'On-Chain', zh: '链上数据' },
+  intel_market: { en: 'Market Anomalies', zh: '市场异常' },
+  // Empty states
+  empty_waiting: { en: 'Waiting for signals...', zh: '等待信号中...' },
+  empty_sub: { en: 'Macro events, news headlines, and predictions will appear here', zh: '宏观事件、新闻和预测将显示在此处' },
+  empty_on: { en: 'No OpenNews articles yet', zh: '暂无 OpenNews 文章' },
+  empty_on_sub: { en: 'Articles from 84+ crypto news sources will appear here', zh: '来自84+加密新闻源的文章将显示在此处' },
+  // Article card
+  show_more: { en: 'show more', zh: '展开' },
+  show_less: { en: 'show less', zh: '收起' },
+  // Impact
+  impact_high: { en: 'HIGH', zh: '高' },
+  impact_med: { en: 'MED', zh: '中' },
+  impact_low: { en: 'LOW', zh: '低' },
+  // Direction
+  dir_bullish: { en: '⬈ BULLISH', zh: '⬈ 看多' },
+  dir_bearish: { en: '⬉ BEARISH', zh: '⬉ 看空' },
+  dir_neutral: { en: '➔ NEUTRAL', zh: '➔ 中性' },
+  // Event titles
+  ev_fed_cut_expected: { en: 'Fed rate cut expectations rising', zh: '美联储降息预期升温' },
+  ev_fed_cut_surprise: { en: 'Surprise Fed rate cut', zh: '美联储意外降息' },
+  ev_fed_hold_hawkish: { en: 'Fed holds rates — hawkish tone', zh: '美联储维持利率——鹰派基调' },
+  ev_fed_hike: { en: 'Fed raises interest rates', zh: '美联储加息' },
+  ev_fed_dovish: { en: 'Fed signals dovish pivot', zh: '美联储释放鸽派信号' },
+  ev_cpi_hot: { en: 'CPI comes in hot — inflation rising', zh: 'CPI超预期——通胀上行' },
+  ev_cpi_cool: { en: 'CPI cools — disinflation signal', zh: 'CPI降温——通缩信号' },
+  ev_gold_breakout: { en: 'Gold hits new highs', zh: '黄金突破新高' },
+  ev_gold_selloff: { en: 'Gold selloff underway', zh: '黄金抛售进行中' },
+  ev_geopolitical_escalation: { en: 'Geopolitical tensions escalate', zh: '地缘政治紧张加剧' },
+  ev_geopolitical_deesc: { en: 'Geopolitical de-escalation', zh: '地缘政治缓和' },
+  ev_tariff_escalation: { en: 'New tariffs / trade war escalation', zh: '新关税/贸易战升级' },
+  ev_tariff_relief: { en: 'Tariff relief / trade deal progress', zh: '关税缓解/贸易协议进展' },
+  ev_rwa_catalyst: { en: 'RWA sector catalyst', zh: 'RWA板块催化' },
+  ev_sec_rwa_positive: { en: 'Positive regulatory development', zh: '监管利好' },
+  ev_sec_rwa_negative: { en: 'Negative regulatory action', zh: '监管利空' },
+  ev_whale_buy: { en: 'Whale accumulation detected', zh: '检测到巨鲸买入' },
+  ev_whale_sell: { en: 'Whale distribution detected', zh: '检测到巨鲸卖出' },
+  ev_liquidation_cascade: { en: 'Liquidation cascade', zh: '连环清算' },
+  ev_nfp_strong: { en: 'Strong jobs report (NFP beat)', zh: '非农就业数据强劲' },
+  ev_nfp_weak: { en: 'Weak jobs report (NFP miss)', zh: '非农就业数据疲软' },
+  ev_gdp_strong: { en: 'GDP beats expectations', zh: 'GDP超预期' },
+  ev_gdp_weak: { en: 'GDP misses expectations', zh: 'GDP不及预期' },
+  // Source tags
+  src_polymarket: { en: 'POLYMARKET', zh: '预测市场' },
+  src_telegram: { en: 'TELEGRAM', zh: '电报' },
+  src_opennews: { en: 'OPENNEWS', zh: '开放新闻' },
+  src_finnhub: { en: 'FINNHUB', zh: 'FINNHUB' },
+  src_fred: { en: 'FRED', zh: 'FRED' },
+  src_cryptopanic: { en: 'CRYPTOPANIC', zh: 'CRYPTOPANIC' },
+  src_rss: { en: 'RSS', zh: 'RSS' },
+  src_news: { en: 'NEWS', zh: '新闻' },
+  // Category labels
+  cat_news: { en: 'NEWS', zh: '新闻' },
+  cat_predict: { en: 'PREDICT', zh: '预测' },
+  cat_macro: { en: 'MACRO', zh: '宏观' },
+  cat_whale: { en: 'WHALE', zh: '巨鲸' },
+  cat_alpha: { en: 'ALPHA', zh: 'ALPHA' },
+  cat_rwa: { en: 'RWA', zh: 'RWA' },
+  cat_meme: { en: 'MEME', zh: 'MEME' },
+  cat_general: { en: 'GENERAL', zh: '综合' },
+  cat_crypto: { en: 'CRYPTO', zh: '加密' },
+  cat_open: { en: 'OPEN', zh: '开放' },
+  // No data
+  no_data: { en: 'No data yet', zh: '暂无数据' },
+};
+
+function T(key) { return (I18N[key] && I18N[key][uiLang]) || (I18N[key] && I18N[key]['en']) || key; }
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = T(key);
+    if (el.tagName === 'INPUT') el.placeholder = val;
+    else el.textContent = val;
+  });
+  // Update sound button title
+  const sb = document.getElementById('sound-btn');
+  if (sb) sb.title = T('sound_title');
+  // Update lang toggle button
+  const lb = document.getElementById('lang-btn');
+  if (lb) { lb.textContent = uiLang === 'en' ? 'EN' : '中文'; lb.classList.toggle('zh', uiLang === 'zh'); }
+  // Re-render dynamic content if data loaded
+  if (lastData) { renderSignals(lastData); updateStats(lastData); }
+  if (viewMode === 'opennews') renderOnFeed();
+}
+
+function toggleLang() {
+  uiLang = uiLang === 'en' ? 'zh' : 'en';
+  onLang = uiLang === 'en' ? 'en' : 'zh';
+  localStorage.setItem('mi_lang', uiLang);
+  applyLang();
+}
+
+let currentFilter = 'all';
+let currentDirection = 'all';
+let filterHot = false;
+let filterRising = false;
+let searchQuery = '';
+let lastData = null;
+let prevSignalIds = '';
+let prevTickerHash = '';
+let prevSourceHash = '';
+let prevPolyHash = '';
+let prevFredHash = '';
+let isFirstRender = true;
+let soundEnabled = localStorage.getItem('mi_sound') === '1';
+let wsConnected = false;
+let ws = null;
+let prevSignalCount = 0;
+
+// ── Votes (localStorage) ──
+function getVotes() { try { return JSON.parse(localStorage.getItem('mi_votes') || '{}'); } catch { return {}; } }
+function saveVotes(v) { localStorage.setItem('mi_votes', JSON.stringify(v)); }
+
+// ── Mobile sidebar ──
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// ── Sound ──
+if (soundEnabled) document.getElementById('sound-btn').classList.add('active');
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('mi_sound', soundEnabled ? '1' : '0');
+  document.getElementById('sound-btn').classList.toggle('active', soundEnabled);
+}
+function playBeep() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // Pleasant two-tone chime (C6 → E6)
+    const notes = [1047, 1319];
+    for (let i = 0; i < notes.length; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = notes[i];
+      osc.type = 'triangle';
+      const start = now + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.08, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
+      osc.start(start);
+      osc.stop(start + 0.35);
+    }
+  } catch {}
+}
+
+// ── Stats panel ──
+function toggleStats() {
+  const body = document.getElementById('stats-body');
+  const toggle = document.getElementById('stats-toggle');
+  body.classList.toggle('open');
+  toggle.innerHTML = body.classList.contains('open') ? '&#9650; ' + T('collapse') : '&#9660; ' + T('expand');
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  prevSignalIds = '';
+  renderFeed();
+}
+
+function setDirection(d, el) {
+  currentDirection = d;
+  document.querySelectorAll('.filter-bar .filter-btn:not(.filter-btn-hot):not(.filter-btn-rising)').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  filterHot = false; filterRising = false;
+  document.getElementById('btn-hot').classList.remove('active');
+  document.getElementById('btn-rising').classList.remove('active');
+  prevSignalIds = '';
+  renderFeed();
+}
+
+function toggleHot() {
+  filterHot = !filterHot;
+  if (filterHot) filterRising = false;
+  document.getElementById('btn-hot').classList.toggle('active', filterHot);
+  document.getElementById('btn-rising').classList.remove('active');
+  prevSignalIds = '';
+  renderFeed();
+}
+
+function toggleRising() {
+  filterRising = !filterRising;
+  if (filterRising) filterHot = false;
+  document.getElementById('btn-rising').classList.toggle('active', filterRising);
+  document.getElementById('btn-hot').classList.remove('active');
+  prevSignalIds = '';
+  renderFeed();
+}
+
+let searchDebounce;
+function onSearch(val) {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    searchQuery = val.toLowerCase().trim();
+    prevSignalIds = '';
+    renderFeed();
+  }, 300);
+}
+
+// ── Helpers ──
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function ago(ts) {
+  const s = Math.floor(Date.now()/1000 - ts);
+  if (s < 0) return 'just now';
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm';
+  if (s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
+}
+
+function impactLevel(mag) {
+  if (mag >= 0.75) return { text: T('impact_high'), cls: 'tag-impact-high' };
+  if (mag >= 0.5) return { text: T('impact_med'), cls: 'tag-impact-med' };
+  return { text: T('impact_low'), cls: 'tag-impact-low' };
+}
+
+function eventTitle(s) {
+  const key = 'ev_' + s.event_type;
+  if (I18N[key]) return T(key);
+  return s.event_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function eventBody(s) {
+  if (s.insight) return s.insight;
+  return s.text || s.event_type.replace(/_/g, ' ');
+}
+
+function catLabel(s) {
+  const map = {
+    'http_news': 'cat_news', 'polymarket': 'cat_predict', 'macro': 'cat_macro',
+    'whale': 'cat_whale', 'alpha': 'cat_alpha', 'rwa': 'cat_rwa', 'meme': 'cat_meme',
+    'general': 'cat_general', 'crypto_news': 'cat_crypto', 'opennews': 'cat_open',
+    'macro_data': 'cat_macro',
+  };
+  const key = map[s.group_category];
+  return key ? T(key) : (s.group_category || '').toUpperCase();
+}
+
+function sourceTag(s) {
+  const m = {
+    polymarket: ['src_polymarket', 'tag-src-poly'],
+    telegram: ['src_telegram', 'tag-src-tg'],
+    opennews: ['src_opennews', 'tag-src-opennews'],
+    finnhub: ['src_finnhub', 'tag-src-finnhub'],
+    fred: ['src_fred', 'tag-src-fred'],
+    cryptopanic: ['src_cryptopanic', 'tag-src-cryptopanic'],
+    rss: ['src_rss', 'tag-src-rss'],
+  };
+  const [key, cls] = m[s.source_type] || ['src_news', 'tag-src-news'];
+  return `<span class="tag tag-source ${cls}">${T(key)}</span>`;
+}
+
+function latencyBadge(s) {
+  const ms = s.latency_ms || 0;
+  if (ms <= 0) return '';
+  const txt = ms >= 1000 ? Math.round(ms/1000) + 's' : ms + 'ms';
+  return `<span class="tag tag-latency">\u23F1 ${txt}</span>`;
+}
+
+function smoothUpdate(el, newHTML) {
+  if (el.innerHTML === newHTML) return;
+  el.classList.add('smooth-update', 'updating');
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      el.innerHTML = newHTML;
+      el.classList.remove('updating');
+    }, 150);
+  });
+}
+
+// ── Rising event types: 3+ occurrences in last 2h ──
+function getRisingTypes() {
+  if (!lastData) return new Set();
+  const cutoff = Date.now()/1000 - 7200;
+  const counts = {};
+  for (const s of (lastData.signals || [])) {
+    if (s.ts >= cutoff) counts[s.event_type] = (counts[s.event_type] || 0) + 1;
+  }
+  return new Set(Object.entries(counts).filter(([,c]) => c >= 3).map(([t]) => t));
+}
+
+// ── Vote handling ──
+function castVote(key, val) {
+  const votes = getVotes();
+  const prev = votes[key] || 0;
+  if (prev === val) { delete votes[key]; } else { votes[key] = val; }
+  saveVotes(votes);
+  // POST to server
+  fetch('/api/vote', { method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ signal_key: key, vote: prev === val ? -val : val }) }).catch(() => {});
+  prevSignalIds = '';
+  renderFeed();
+}
+
+// ── Build signal card HTML ──
+function buildCardHTML(s) {
+  const dir = s.direction || 'neutral';
+  const dirCls = 'tag-' + dir;
+  const impact = impactLevel(s.magnitude || 0);
+  const cat = catLabel(s);
+  const tokens = (s.tokens || []);
+  const title = eventTitle(s);
+  const body = eventBody(s);
+  const hasInsight = s.insight && s.insight.length > 10;
+  const showBody = body && body.length > 10;
+  const rawHeadline = hasInsight ? (s.text || '') : '';
+  const key = signalKey(s);
+  const votes = getVotes();
+  const myVote = votes[key] || 0;
+
+  return `<div class="card-accent card-accent-${dir}"></div>
+    <div class="card-inner">
+      <div class="card-top">
+        <div class="card-title">${esc(title)}</div>
+        <div class="card-time">${ago(s.ts)}</div>
+      </div>
+      ${showBody ? `<div class="card-body">${esc(body)}</div>` : ''}
+      ${rawHeadline && rawHeadline.length > 10 ? `<div class="card-headline">${esc(rawHeadline)}</div>` : ''}
+      <div class="card-tags">
+        <span class="tag ${dirCls}">${T('dir_' + dir)}</span>
+        <span class="tag ${impact.cls}">${impact.text}</span>
+        ${cat ? `<span class="tag tag-cat">${cat}</span>` : ''}
+        ${tokens.map(t => `<span class="tag tag-token">$${esc(t)}</span>`).join('')}
+        ${latencyBadge(s)}
+      </div>
+      <div class="card-meta">
+        ${sourceTag(s)}
+        <span class="meta-sender">${esc(s.sender || s.source_name)}</span>
+        <span>${esc(s.classify_method)}</span>
+        ${s.affects && s.affects.length ? `<span>\u2192 ${s.affects.join(', ')}</span>` : ''}
+        <div class="vote-wrap">
+          <button class="vote-btn${myVote===1?' voted-up':''}" onclick="event.stopPropagation();castVote('${key}',1)">\u25B2</button>
+          <span class="vote-count">${myVote || ''}</span>
+          <button class="vote-btn${myVote===-1?' voted-down':''}" onclick="event.stopPropagation();castVote('${key}',-1)">\u25BC</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function signalKey(s) { return `${s.ts}_${s.event_type}_${s.source_type}`; }
+
+function renderFeed() {
+  if (!lastData) return;
+  const signals = lastData.signals || [];
+  let filtered = signals;
+  if (currentFilter !== 'all') filtered = filtered.filter(s => s.source_type === currentFilter);
+  if (currentDirection !== 'all') filtered = filtered.filter(s => s.direction === currentDirection);
+
+  // HOT: last hour, magnitude >= 0.7
+  if (filterHot) {
+    const cutoff = Date.now()/1000 - 3600;
+    filtered = filtered.filter(s => s.ts >= cutoff && (s.magnitude || 0) >= 0.7);
+  }
+
+  // RISING: event types with 3+ in last 2h
+  if (filterRising) {
+    const rising = getRisingTypes();
+    filtered = filtered.filter(s => rising.has(s.event_type));
+  }
+
+  // Search
+  if (searchQuery) {
+    filtered = filtered.filter(s =>
+      (s.text || '').toLowerCase().includes(searchQuery) ||
+      (s.event_type || '').toLowerCase().includes(searchQuery) ||
+      (s.tokens || []).some(t => t.toLowerCase().includes(searchQuery))
+    );
+  }
+
+  const feed = document.getElementById('feed');
+
+  if (!filtered.length) {
+    if (!feed.querySelector('.empty-state')) {
+      feed.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">&#9670;</div>
+        <div class="empty-text">${T('empty_waiting')}</div>
+        <div class="empty-sub">${T('empty_sub')}</div>
+      </div>`;
+    }
+    return;
+  }
+
+  const newIds = filtered.map(signalKey).join('|');
+
+  if (newIds === prevSignalIds) {
+    feed.querySelectorAll('.signal-card').forEach((card, i) => {
+      if (filtered[i]) {
+        const timeEl = card.querySelector('.card-time');
+        if (timeEl) timeEl.textContent = ago(filtered[i].ts);
+      }
+    });
+    return;
+  }
+
+  const oldSet = new Set(prevSignalIds.split('|'));
+  prevSignalIds = newIds;
+
+  if (isFirstRender || !feed.children.length) {
+    let html = '';
+    for (const s of filtered) {
+      html += `<div class="signal-card">${buildCardHTML(s)}</div>`;
+    }
+    feed.innerHTML = html;
+    isFirstRender = false;
+    return;
+  }
+
+  const newSignals = filtered.filter(s => !oldSet.has(signalKey(s)));
+  let html = '';
+  for (const s of filtered) {
+    const key = signalKey(s);
+    const isNew = newSignals.some(ns => signalKey(ns) === key);
+    html += `<div class="signal-card${isNew ? ' card-new' : ''}">${buildCardHTML(s)}</div>`;
+  }
+  feed.innerHTML = html;
+
+  // Sound alert for new high-impact signals
+  if (newSignals.some(s => (s.magnitude || 0) >= 0.7)) {
+    playBeep();
+  }
+}
+
+function renderSidebar() {
+  if (!lastData) return;
+  const st = lastData.stats || {};
+  const signals = lastData.signals || [];
+
+  document.getElementById('nav-all').textContent = signals.length;
+  document.getElementById('nav-news').textContent = signals.filter(s => s.source_type === 'newsnow').length;
+  document.getElementById('nav-tg').textContent = signals.filter(s => s.source_type === 'telegram').length;
+  document.getElementById('nav-poly').textContent = signals.filter(s => s.source_type === 'polymarket').length;
+  document.getElementById('nav-opennews').textContent = signals.filter(s => s.source_type === 'opennews').length;
+  document.getElementById('nav-finnhub').textContent = signals.filter(s => s.source_type === 'finnhub').length;
+  document.getElementById('nav-cryptopanic').textContent = signals.filter(s => s.source_type === 'cryptopanic').length;
+  document.getElementById('nav-rss').textContent = signals.filter(s => s.source_type === 'rss').length;
+
+  document.getElementById('st-proc').textContent = (st.messages_processed || 0).toLocaleString();
+  document.getElementById('st-sig').textContent = (st.signals_produced || 0).toLocaleString();
+  document.getElementById('st-llm').textContent = (st.llm_calls || 0).toLocaleString();
+  const up = lastData.uptime_sec || 0;
+  document.getElementById('st-up').textContent = up < 3600 ? Math.floor(up/60)+'m' : Math.floor(up/3600)+'h '+Math.floor((up%3600)/60)+'m';
+
+  const regime = lastData.regime || 'neutral';
+  const pill = document.getElementById('regime-pill');
+  pill.textContent = regime.toUpperCase();
+  pill.className = 'regime-pill regime-' + regime;
+  document.getElementById('sentiment-chip').textContent = (lastData.sentiment || 0).toFixed(3);
+
+  // Sources
+  const sources = lastData.source_status || {};
+  const sourceHash = JSON.stringify(sources);
+  if (sourceHash !== prevSourceHash) {
+    prevSourceHash = sourceHash;
+    const footer = document.getElementById('source-status');
+    let shtml = '';
+    const knownKeys = ['wallstreetcn','cls','jin10','polymarket','opennews_ws','opennews_rest','fred','cryptopanic'];
+    const allSrc = [
+      { key: 'newsnow', label: 'NewsNow', match: ['wallstreetcn','cls','jin10'] },
+      { key: 'polymarket', label: 'Polymarket', match: ['polymarket'] },
+      { key: 'opennews', label: 'OpenNews', match: ['opennews_ws', 'opennews_rest'] },
+      { key: 'finnhub', label: 'Finnhub', match: null, matchFn: k => !knownKeys.includes(k) && k !== 'fred' && !k.startsWith('rss:') },
+      { key: 'fred', label: 'FRED', match: ['fred'] },
+      { key: 'cryptopanic', label: 'CryptoPanic', match: ['cryptopanic'] },
+      { key: 'rss', label: 'RSS', match: null, matchFn: k => k.startsWith('rss:') },
+      { key: 'telegram', label: 'Telegram', match: null, matchFn: () => false },
+    ];
+    for (const src of allSrc) {
+      let active = false, staleSec = 9999;
+      for (const [k, v] of Object.entries(sources)) {
+        let isMatch = false;
+        if (src.match) isMatch = src.match.includes(k);
+        else if (src.matchFn) isMatch = src.matchFn(k);
+        if (isMatch) { active = true; staleSec = Math.min(staleSec, v.ago_sec || 9999); }
+      }
+      const cls = active ? (staleSec < 300 ? 'dot-ok' : 'dot-stale') : 'dot-off';
+      const agoTxt = active ? (staleSec < 60 ? staleSec+'s' : staleSec < 3600 ? Math.floor(staleSec/60)+'m' : Math.floor(staleSec/3600)+'h') : 'off';
+      shtml += `<div class="source-row"><span class="dot ${cls}"></span><span>${src.label}</span><span style="margin-left:auto;color:var(--text3);font-family:'JetBrains Mono',monospace">${agoTxt}</span></div>`;
+    }
+    smoothUpdate(footer, shtml);
+  }
+
+  // FNG
+  const fng = lastData.fear_greed || {};
+  if (fng.value !== undefined) {
+    const v = fng.value;
+    const fngColor = v <= 25 ? '#fb7185' : v <= 45 ? '#fb923c' : v <= 55 ? '#fbbf24' : v <= 75 ? '#a3e635' : '#34d399';
+    const fngBg = v <= 25 ? 'rgba(251,113,133,0.15)' : v <= 45 ? 'rgba(251,146,60,0.15)' : v <= 55 ? 'rgba(251,191,36,0.12)' : v <= 75 ? 'rgba(163,230,53,0.12)' : 'rgba(52,211,153,0.12)';
+    document.getElementById('fng-value').textContent = v;
+    document.getElementById('fng-value').style.color = fngColor;
+    const labelEl = document.getElementById('fng-label');
+    labelEl.textContent = fng.label || '';
+    labelEl.style.color = fngColor;
+    labelEl.style.background = fngBg;
+    const marker = document.getElementById('fng-marker');
+    marker.style.left = `calc(${v}% - 7px)`;
+    marker.style.background = fngColor;
+    marker.style.boxShadow = `0 0 10px ${fngColor}40`;
+
+    const hist = fng.history || [];
+    const histHash = hist.map(h => h.value).join(',');
+    const histEl = document.getElementById('fng-history');
+    if (histEl.dataset.hash !== histHash) {
+      histEl.dataset.hash = histHash;
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      let hhtml = '';
+      for (const h of hist.slice(0, 7).reverse()) {
+        const hv = h.value;
+        const hc = hv <= 25 ? '#fb7185' : hv <= 45 ? '#fb923c' : hv <= 55 ? '#fbbf24' : hv <= 75 ? '#a3e635' : '#34d399';
+        const d = h.ts ? new Date(h.ts * 1000) : null;
+        const dayLabel = d ? days[d.getDay()] : '';
+        hhtml += `<div class="fng-day">
+          <div class="fng-day-bar" style="background:${hc};opacity:${hv === v ? 1 : 0.6}" title="${h.label}: ${hv}">${hv}</div>
+          <div class="fng-day-label">${dayLabel}</div>
+        </div>`;
+      }
+      smoothUpdate(histEl, hhtml);
+    }
+  }
+
+  // Polymarket
+  const markets = (lastData.polymarket || []).filter(m => m.probability > 0.02 && m.probability < 0.98);
+  const polyHash = markets.map(m => `${m.question}:${m.probability.toFixed(3)}`).join('|');
+  if (polyHash !== prevPolyHash) {
+    prevPolyHash = polyHash;
+    const polySb = document.getElementById('poly-sidebar');
+    if (!markets.length) {
+      smoothUpdate(polySb, `<div style="font-size:11px;color:var(--text3);padding:8px 8px">${T('no_data')}</div>`);
+    } else {
+      const sorted = [...markets].sort((a,b) => Math.abs(b.probability-0.5) - Math.abs(a.probability-0.5));
+      let phtml = '';
+      for (const m of sorted.slice(0, 6)) {
+        const pct = (m.probability * 100).toFixed(0);
+        const color = m.probability > 0.5 ? 'var(--green)' : m.probability < 0.4 ? 'var(--red)' : 'var(--blue)';
+        phtml += `<div class="poly-card">
+          <div class="poly-q">${esc(m.question)}</div>
+          <div class="poly-bar-wrap">
+            <div class="poly-bar"><div class="poly-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span class="poly-pct" style="color:${color}">${pct}%</span>
+          </div>
+        </div>`;
+      }
+      smoothUpdate(polySb, phtml);
+    }
+  }
+
+  // FRED
+  const fredData = lastData.fred_indicators || {};
+  const fredKeys = Object.keys(fredData);
+  const fredHash = fredKeys.map(k => `${k}:${fredData[k].value}`).join('|');
+  const fredSection = document.getElementById('fred-section');
+  const fredSb = document.getElementById('fred-sidebar');
+  if (!fredKeys.length) {
+    fredSection.style.display = 'none';
+  } else {
+    fredSection.style.display = '';
+    if (fredHash !== prevFredHash) {
+      prevFredHash = fredHash;
+      let fhtml = '';
+      for (const key of fredKeys) {
+        const d = fredData[key];
+        const val = d.value != null ? d.value.toFixed(2) : '--';
+        let changeTxt = '--';
+        let changeCls = 'fred-flat';
+        if (d.change != null) {
+          const sign = d.change > 0 ? '+' : '';
+          changeTxt = sign + d.change.toFixed(2);
+          changeCls = d.change > 0 ? 'fred-up' : d.change < 0 ? 'fred-down' : 'fred-flat';
+        }
+        fhtml += `<div class="fred-row">
+          <span class="fred-label">${esc(d.label || key)}</span>
+          <span class="fred-val">${val}</span>
+          <span class="fred-change ${changeCls}">${changeTxt}</span>
+        </div>`;
+      }
+      smoothUpdate(fredSb, fhtml);
+    }
+  }
+}
+
+// ── Stats panel ──
+function renderStats() {
+  if (!lastData) return;
+  const signals = lastData.signals || [];
+  const now = Date.now()/1000;
+  const todayCutoff = now - 86400;
+  const todaySignals = signals.filter(s => s.ts >= todayCutoff);
+  const eventCounts = lastData.event_counts || {};
+
+  // Stats grid
+  const bullCount = todaySignals.filter(s => s.direction === 'bullish').length;
+  const bearCount = todaySignals.filter(s => s.direction === 'bearish').length;
+  const grid = document.getElementById('stats-grid');
+  grid.innerHTML = `
+    <div class="stats-card"><div class="stats-card-label">${T('stat_today')}</div><div class="stats-card-value">${todaySignals.length}</div></div>
+    <div class="stats-card"><div class="stats-card-label">${T('stat_bullish')}</div><div class="stats-card-value" style="color:var(--green)">${bullCount}</div></div>
+    <div class="stats-card"><div class="stats-card-label">${T('stat_bearish')}</div><div class="stats-card-value" style="color:var(--red)">${bearCount}</div></div>
+    <div class="stats-card"><div class="stats-card-label">${T('stat_sources')}</div><div class="stats-card-value">${Object.keys(lastData.source_status || {}).length}</div></div>
+  `;
+
+  // Event type bars (top 5)
+  const bars = document.getElementById('event-bars');
+  const sorted = Object.entries(eventCounts).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const maxCount = sorted.length ? sorted[0][1] : 1;
+  let bhtml = '<div style="margin-top:8px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px">' + T('top_events') + '</div>';
+  for (const [et, count] of sorted) {
+    const pct = Math.max(5, (count/maxCount)*100);
+    bhtml += `<div class="event-bar">
+      <span class="event-bar-label">${esc(et.replace(/_/g, ' '))}</span>
+      <div class="event-bar-track"><div class="event-bar-fill" style="width:${pct}%"></div></div>
+      <span class="event-bar-count">${count}</span>
+    </div>`;
+  }
+  bars.innerHTML = bhtml;
+}
+
+// Token logos — crypto from CoinGecko CDN, commodities as clean SVG
+const TICKER_LOGOS = {
+  BTC: `<img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="BTC">`,
+  ETH: `<img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="ETH">`,
+  SPY: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#2563eb"/><path d="M4 13 L7 10 L10 11.5 L13 6 L16 8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="8" r="1.2" fill="#34d399"/></svg>`,
+  GLD: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#92700a"/><rect x="4" y="8" width="12" height="6" rx="1" fill="#ffd700"/><rect x="5" y="9" width="4" height="4" rx="0.5" fill="#ffe766" opacity="0.5"/><rect x="6" y="5" width="8" height="4" rx="1" fill="#ffb300"/></svg>`,
+  SLV: `<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="10" fill="#4a4a4a"/><rect x="4" y="8" width="12" height="6" rx="1" fill="#c0c0c0"/><rect x="5" y="9" width="4" height="4" rx="0.5" fill="#e8e8e8" opacity="0.5"/><rect x="6" y="5" width="8" height="4" rx="1" fill="#a0a0a0"/></svg>`,
+};
+
+function fmtTickerItem(sym, t) {
+  const price = t.price >= 1000 ? t.price.toLocaleString('en-US', {maximumFractionDigits: 0})
+            : t.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const sign = t.change_pct > 0 ? '+' : '';
+  const cls = t.change_pct > 0 ? 'ticker-up' : t.change_pct < 0 ? 'ticker-down' : 'ticker-flat';
+  const logo = TICKER_LOGOS[sym] || '';
+  return `<div class="ticker-item" data-sym="${sym}">
+    <span class="ticker-logo">${logo}</span>
+    <span class="ticker-label">${esc(t.label)}</span>
+    <span class="ticker-price" data-sym="${sym}">$${price}</span>
+    <span class="ticker-change ${cls}">${sign}${t.change_pct.toFixed(2)}%</span>
+  </div><div class="ticker-sep"></div>`;
+}
+
+function renderTickerBar() {
+  if (!lastData) return;
+  const tickers = lastData.price_tickers || {};
+  const bar = document.getElementById('ticker-bar');
+  const order = ['SPY', 'GLD', 'SLV', 'BTC', 'ETH'];
+  const symbols = order.filter(s => tickers[s]);
+  if (!symbols.length) { if (bar.innerHTML) bar.innerHTML = ''; return; }
+
+  const tickerHash = symbols.map(s => `${s}:${tickers[s].price}:${tickers[s].change_pct}`).join('|');
+  if (tickerHash === prevTickerHash) return;
+  prevTickerHash = tickerHash;
+
+  // Build one set of items
+  let items = '';
+  for (const sym of symbols) items += fmtTickerItem(sym, tickers[sym]);
+
+  // Check if track already exists — update in-place to preserve scroll position
+  let track = bar.querySelector('.ticker-track');
+  if (track) {
+    // Update prices with flash animation
+    for (const sym of symbols) {
+      const t = tickers[sym];
+      const price = t.price >= 1000 ? t.price.toLocaleString('en-US', {maximumFractionDigits: 0})
+                : t.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      const sign = t.change_pct > 0 ? '+' : '';
+      const cls = t.change_pct > 0 ? 'ticker-up' : t.change_pct < 0 ? 'ticker-down' : 'ticker-flat';
+      track.querySelectorAll(`.ticker-price[data-sym="${sym}"]`).forEach(el => {
+        if (el.textContent !== '$' + price) {
+          el.textContent = '$' + price;
+          el.classList.remove('flash');
+          void el.offsetWidth; // reflow
+          el.classList.add('flash');
+        }
+      });
+      track.querySelectorAll(`.ticker-item[data-sym="${sym}"] .ticker-change`).forEach(el => {
+        el.textContent = sign + t.change_pct.toFixed(2) + '%';
+        el.className = 'ticker-change ' + cls;
+      });
+    }
+    return;
+  }
+
+  // Duplicate items 4x for seamless marquee loop
+  const repeated = items.repeat(4);
+  const dur = Math.max(20, symbols.length * 8);
+  bar.innerHTML = `<div class="ticker-track" style="--marquee-dur:${dur}s">${repeated}</div>`;
+}
+
+function render() {
+  renderFeed();
+  renderSidebar();
+  renderTickerBar();
+  renderStats();
+}
+
+// ── WebSocket client ──
+function connectWS() {
+  const port = parseInt(location.port || '3252') + 1;
+  const url = `ws://${location.hostname}:${port}`;
+  try {
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      wsConnected = true;
+      const chip = document.getElementById('ws-chip');
+      chip.innerHTML = '<span class="live-dot"></span>' + T('ws_on');
+      chip.className = 'ws-chip ws-connected';
+      ws.send(JSON.stringify({action:'subscribe'}));
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'signal' && msg.data && lastData) {
+          lastData.signals.unshift(msg.data);
+          if (lastData.signals.length > 50) lastData.signals.length = 50;
+          prevSignalIds = '';
+          renderFeed();
+          if ((msg.data.magnitude || 0) >= 0.7) playBeep();
+        }
+        // OpenNews article via WS
+        if (msg.type === 'opennews_article' && msg.data) {
+          const a = msg.data;
+          if (a.id && !onArticleIndex.hasOwnProperty(a.id)) {
+            onArticles.unshift(a);
+            onArticleIndex[a.id] = 0;
+            if (onArticles.length > 200) onArticles.length = 200;
+            if (viewMode === 'opennews') renderOnFeed();
+            const score = a.aiRating && a.aiRating.score;
+            if (score >= 80) playBeep();
+          }
+        }
+        // OpenNews AI update via WS
+        if (msg.type === 'opennews_ai_update' && msg.data) {
+          const d = msg.data;
+          const idx = onArticles.findIndex(a => a.id === d.id);
+          if (idx >= 0) {
+            onArticles[idx].aiRating = d.aiRating;
+            if (viewMode === 'opennews') {
+              const card = document.querySelector(`.on-article[data-id="${d.id}"] .score-badge`);
+              if (card && d.aiRating) {
+                const s = d.aiRating.score;
+                const cls = s >= 70 ? 'high' : s >= 40 ? 'mid' : 'low';
+                card.className = 'score-badge ' + cls;
+                card.textContent = s != null ? s : '--';
+              }
+            }
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = () => {
+      wsConnected = false;
+      const chip = document.getElementById('ws-chip');
+      chip.innerHTML = '<span class="live-dot off"></span>' + T('ws_off');
+      chip.className = 'ws-chip ws-disconnected';
+      setTimeout(connectWS, 5000);
+    };
+    ws.onerror = () => { ws.close(); };
+  } catch {
+    setTimeout(connectWS, 5000);
+  }
+}
+
+async function poll() {
+  try {
+    const resp = await fetch('/api/state');
+    lastData = await resp.json();
+    // Update WS client count
+    if (lastData.stats) {
+      const wsEl = document.getElementById('st-ws');
+      if (wsEl) wsEl.textContent = '~';
+    }
+    render();
+  } catch(e) {
+    console.error('Poll error:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  OPENNEWS VIEW
+// ══════════════════════════════════════════════════════════════════
+let viewMode = 'signals';
+let onArticles = [];
+let onArticleIndex = {};
+let onFilterEngine = '';
+let onFilterSignal = '';
+let onFilterMinScore = 0;
+let onFilterSearch = '';
+let onLang = uiLang; // synced from global lang
+let onPollTimer = null;
+let onLastData = null;
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.body.className = 'view-' + mode;
+  document.getElementById('vt-signals').classList.toggle('active', mode === 'signals');
+  document.getElementById('vt-opennews').classList.toggle('active', mode === 'opennews');
+  if (mode === 'opennews') {
+    if (!onPollTimer) {
+      pollOnState();
+      onPollTimer = setInterval(pollOnState, 5000);
+    }
+  } else {
+    if (onPollTimer) { clearInterval(onPollTimer); onPollTimer = null; }
+  }
+}
+
+function scoreBadge(score) {
+  if (score == null || score === undefined) return '<span class="score-badge none">--</span>';
+  const cls = score >= 70 ? 'high' : score >= 40 ? 'mid' : 'low';
+  return `<span class="score-badge ${cls}">${score}</span>`;
+}
+
+function renderOnArticleCard(a) {
+  const ai = a.aiRating || {};
+  const score = ai.score;
+  const signal = ai.signal || 'neutral';
+  const enSummary = ai.enSummary || '';
+  const engine = a.engineType || 'news';
+  const coins = a.coins || [];
+  const rawText = a.text || '';
+  const tsMs = a.ts || 0;
+  const tsSec = tsMs > 1e12 ? tsMs / 1000 : tsMs;
+  const agoStr = ago(tsSec);
+
+  // Language toggle: zh mode shows raw text first, en mode shows English summary first
+  const isChinese = /[\u4e00-\u9fff]/.test(rawText);
+  const headline = onLang === 'zh' ? (rawText || enSummary) : (enSummary || rawText);
+  const secondaryText = onLang === 'zh' ? (isChinese && enSummary ? enSummary : '') : (enSummary && isChinese ? rawText : '');
+  const showOriginal = !!secondaryText;
+
+  let coinPills = '';
+  for (const c of coins.slice(0, 5)) {
+    const sym = (typeof c === 'object' ? c.symbol : c) || '';
+    if (sym) coinPills += `<span class="on-coin-pill">${esc(sym.toUpperCase())}</span> `;
+  }
+
+  const isHigh = typeof score === 'number' && score >= 70;
+  const cardCls = 'on-article' + (isHigh ? ' high-score' : '');
+  const uid = 'oa-' + (a.id || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
+
+  return `<div class="${cardCls}" data-id="${esc(a.id)}">
+    <div class="on-article-top">
+      ${scoreBadge(score)}
+      <div class="on-article-text" id="${uid}-txt">${esc(headline)}</div>
+      <div class="on-article-time">${agoStr}</div>
+    </div>
+    ${headline.length > 140 ? `<button class="on-expand-btn" onclick="toggleOnExpand('${uid}-txt', this)">${T('show_more')}</button>` : ''}
+    <div class="on-article-meta">
+      <span class="on-engine-tag ${engine}">${engine}</span>
+      <span class="on-signal-tag ${signal}">${signal}</span>
+      ${coinPills}
+      ${a.newsType ? `<span style="font-size:10px;color:var(--text3)">${esc(a.newsType)}</span>` : ''}
+    </div>
+    ${showOriginal ? `<div class="on-summary">${esc(secondaryText.substring(0, 200))}</div>` : ''}
+  </div>`;
+}
+
+function renderOnFeed() {
+  let pool = onArticles;
+  if (onFilterEngine) pool = pool.filter(a => a.engineType === onFilterEngine);
+  if (onFilterSignal) pool = pool.filter(a => {
+    const ai = a.aiRating;
+    return ai && typeof ai === 'object' && ai.signal === onFilterSignal;
+  });
+  if (onFilterMinScore > 0) pool = pool.filter(a => {
+    const ai = a.aiRating;
+    return ai && typeof ai === 'object' && (ai.score || 0) >= onFilterMinScore;
+  });
+  if (onFilterSearch) {
+    const q = onFilterSearch.toLowerCase();
+    pool = pool.filter(a => {
+      const text = (a.text || '').toLowerCase();
+      const summary = (a.aiRating && a.aiRating.enSummary || '').toLowerCase();
+      return text.includes(q) || summary.includes(q);
+    });
+  }
+
+  const feed = document.getElementById('on-feed');
+  if (!pool.length) {
+    feed.innerHTML = `<div class="empty-state"><div class="empty-icon">&#9670;</div><div class="empty-text">${T('empty_on')}</div><div class="empty-sub">${T('empty_on_sub')}</div></div>`;
+    return;
+  }
+  let html = '';
+  for (const a of pool.slice(0, 100)) {
+    html += renderOnArticleCard(a);
+  }
+  feed.innerHTML = html;
+}
+
+function updateOnMetrics(m) {
+  if (!m) return;
+  document.getElementById('on-m-avg').textContent = m.avg_score || '--';
+  const sr = m.signal_ratios || {};
+  document.getElementById('on-m-long').textContent = sr.long != null ? sr.long + '%' : '--';
+  document.getElementById('on-m-short').textContent = sr.short != null ? sr.short + '%' : '--';
+  document.getElementById('on-m-neutral').textContent = sr.neutral != null ? sr.neutral + '%' : '--';
+  const topCoins = m.top_coins || [];
+  document.getElementById('on-m-topcoin').textContent = topCoins.length ? topCoins[0].symbol : '--';
+  const vel = m.velocity || {};
+  document.getElementById('on-m-velocity').textContent = vel.overall != null ? vel.overall + '/h' : '--';
+  document.getElementById('on-m-highpct').textContent = m.high_score_rate != null ? m.high_score_rate + '%' : '--';
+  const cnt = m.article_count || 0;
+  document.getElementById('on-m-count').textContent = cnt;
+  const tabCnt = document.getElementById('on-tab-count');
+  if (tabCnt) tabCnt.textContent = cnt > 0 ? '(' + cnt + ')' : '';
+}
+
+function renderOnScoreDist(dist) {
+  if (!dist) return;
+  const el = document.getElementById('on-score-dist');
+  const maxVal = Math.max(1, ...Object.values(dist));
+  const colors = {'0-20': 'var(--red)', '20-40': 'var(--orange)', '40-60': 'var(--yellow)', '60-80': 'var(--green)', '80-100': 'var(--cyan)'};
+  let html = '';
+  for (const [bucket, count] of Object.entries(dist)) {
+    const pct = Math.max(3, count / maxVal * 100);
+    html += `<div class="on-dist-bar">
+      <span class="on-dist-label">${bucket}</span>
+      <div class="on-dist-track"><div class="on-dist-fill" style="width:${pct}%;background:${colors[bucket] || 'var(--blue)'}"></div></div>
+      <span class="on-dist-count">${count}</span>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderOnHotCoins(coins) {
+  if (!coins || !coins.length) return;
+  const el = document.getElementById('on-hot-coins');
+  const maxCount = Math.max(1, coins[0].count);
+  let html = '';
+  for (const c of coins.slice(0, 10)) {
+    const pct = Math.max(5, c.count / maxCount * 100);
+    const sigColor = c.dominant_signal === 'long' ? 'var(--green)' : c.dominant_signal === 'short' ? 'var(--red)' : 'var(--text3)';
+    html += `<div class="on-coin-row">
+      <span class="on-coin-sym">${esc(c.symbol)}</span>
+      <div class="on-coin-bar"><div class="on-coin-fill" style="width:${pct}%;background:${sigColor}"></div></div>
+      <span class="on-coin-count">${c.count}</span>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderOnIntelList(id, items) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!items || !items.length) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--text3)">${T('no_data')}</div>`;
+    return;
+  }
+  let html = '';
+  for (const a of items) {
+    const ai = a.aiRating || {};
+    const score = ai.score;
+    const text = ai.enSummary || a.text || '';
+    html += `<div class="on-intel-item">${scoreBadge(score)} ${esc(text.substring(0, 120))}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderOnSourceGrid(sources) {
+  const el = document.getElementById('on-source-grid');
+  if (!sources || !sources.length) { el.innerHTML = ''; return; }
+  let html = '';
+  for (const s of sources) {
+    const dotCls = s.status === 'active' ? 'dot-ok' : s.status === 'stale' ? 'dot-stale' : 'dot-off';
+    const agoTxt = s.last_seen_ago < 60 ? s.last_seen_ago + 's' : s.last_seen_ago < 3600 ? Math.floor(s.last_seen_ago / 60) + 'm' : Math.floor(s.last_seen_ago / 3600) + 'h';
+    html += `<div class="on-source-dot"><span class="dot ${dotCls}"></span>${esc(s.name)} <span style="color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:10px">${agoTxt}</span></div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function pollOnState() {
+  try {
+    const resp = await fetch('/api/opennews/state');
+    onLastData = await resp.json();
+    onArticles = onLastData.articles || [];
+    // Rebuild index
+    onArticleIndex = {};
+    for (let i = 0; i < onArticles.length; i++) {
+      if (onArticles[i].id) onArticleIndex[onArticles[i].id] = i;
+    }
+    renderOnFeed();
+    updateOnMetrics(onLastData.metrics);
+    const m = onLastData.metrics || {};
+    renderOnScoreDist(m.score_distribution);
+    renderOnHotCoins(m.top_coins);
+    const intel = onLastData.intelligence || {};
+    renderOnIntelList('on-intel-predictions', intel.predictions);
+    renderOnIntelList('on-intel-listings', intel.listings);
+    renderOnIntelList('on-intel-onchain', intel.onchain);
+    renderOnIntelList('on-intel-market', intel.market_anomalies);
+    renderOnSourceGrid(onLastData.source_health);
+  } catch(e) {
+    console.error('OpenNews poll error:', e);
+  }
+}
+
+
+function toggleOnExpand(txtId, btn) {
+  const el = document.getElementById(txtId);
+  if (!el) return;
+  const expanded = el.classList.toggle('expanded');
+  btn.textContent = expanded ? T('show_less') : T('show_more');
+}
+
+function setOnEngine(engine, el) {
+  onFilterEngine = engine;
+  document.querySelectorAll('.on-engine-tab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderOnFeed();
+}
+
+function setOnSignal(signal) {
+  if (onFilterSignal === signal) {
+    onFilterSignal = '';
+  } else {
+    onFilterSignal = signal;
+  }
+  document.getElementById('on-sig-long').classList.toggle('active', onFilterSignal === 'long');
+  document.getElementById('on-sig-short').classList.toggle('active', onFilterSignal === 'short');
+  document.getElementById('on-sig-neutral').classList.toggle('active', onFilterSignal === 'neutral');
+  renderOnFeed();
+}
+
+function onOnScoreChange(val) {
+  onFilterMinScore = parseInt(val) || 0;
+  document.getElementById('on-score-val').textContent = val;
+  renderOnFeed();
+}
+
+let onSearchDebounce;
+function onOnSearch(val) {
+  clearTimeout(onSearchDebounce);
+  onSearchDebounce = setTimeout(() => {
+    onFilterSearch = val.trim();
+    renderOnFeed();
+  }, 300);
+}
+
+// Set initial view mode to signals
+document.body.classList.add('view-signals');
+
+// Apply saved language
+applyLang();
+
+// Initial poll + WS connect
+poll();
+connectWS();
+// Reduced poll frequency when WS is active: 10s instead of 3s
+setInterval(() => { poll(); }, wsConnected ? 10000 : 3000);
+// Adaptive interval
+setInterval(() => {
+  const interval = wsConnected ? 10000 : 3000;
+  // Sidebar data (FNG, FRED, prices) still needs periodic refresh
+  poll();
+}, 10000);
+</script>
+</body>
+</html>
