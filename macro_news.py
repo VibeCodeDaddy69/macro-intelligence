@@ -150,7 +150,17 @@ def _load_state():
             _opennews_dedup.clear()
             _opennews_dedup.update(a["id"] for a in _opennews_articles if "id" in a)
             _rebuild_opennews_index()
-        _log(f"Loaded state: {len(_signals)} signals, {len(_reputation)} senders, {len(_opennews_articles)} opennews articles")
+        # Backfill token_impacts for legacy signals
+        backfilled = 0
+        for sig in _signals:
+            if "token_impacts" not in sig:
+                sig["token_impacts"] = _compute_token_impacts(
+                    sig.get("event_type", ""), sig.get("direction", "neutral"),
+                    sig.get("magnitude", 0.5), sig.get("tokens", []),
+                )
+                backfilled += 1
+        _log(f"Loaded state: {len(_signals)} signals, {len(_reputation)} senders, {len(_opennews_articles)} opennews articles"
+             f"{f' (backfilled {backfilled} token impacts)' if backfilled else ''}")
     except Exception as e:
         _log(f"load_state error: {e}", "WARN")
 
@@ -1201,6 +1211,52 @@ def _extract_tokens(text: str) -> list[str]:
     return sorted(all_tickers)
 
 # ═══════════════════════════════════════════════════════════════════════
+#  TOKEN IMPACT ENGINE
+# ═══════════════════════════════════════════════════════════════════════
+def _compute_token_impacts(event_type: str, direction: str, magnitude: float,
+                           extracted_tokens: list[str]) -> list[dict]:
+    """Compute per-token impact scores from event type and extracted tokens.
+
+    Returns list of {symbol, impact, direction} sorted by abs(impact) desc.
+    """
+    impacts = {}  # symbol → impact score
+
+    # 1. Map from event type (high confidence — curated correlations)
+    base_map = C.TOKEN_IMPACT_MAP.get(event_type, [])
+    if not base_map and direction != "neutral":
+        # Unknown event type but has direction → use generic crypto correlation
+        base_map = C.TOKEN_IMPACT_GENERIC
+        if direction == "bearish":
+            base_map = [(sym, -abs(score)) for sym, score in base_map]
+
+    for sym, base_score in base_map:
+        impacts[sym] = round(base_score * magnitude, 3)
+
+    # 2. Extracted tokens not already covered get directional score
+    for tok in extracted_tokens:
+        tok_up = tok.upper()
+        if tok_up in impacts or tok_up in C.TICKER_NOISE_WORDS:
+            continue
+        # Assign based on direction with lower confidence
+        if direction == "bullish":
+            impacts[tok_up] = round(magnitude * 0.45, 3)
+        elif direction == "bearish":
+            impacts[tok_up] = round(-magnitude * 0.45, 3)
+        else:
+            impacts[tok_up] = 0.0
+
+    # 3. Convert to sorted list
+    result = []
+    for sym, score in sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True):
+        result.append({
+            "symbol": sym,
+            "impact": round(score, 2),
+            "direction": "bullish" if score > 0.01 else "bearish" if score < -0.01 else "neutral",
+        })
+    return result[:8]  # Cap at 8 tokens max
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  REPUTATION SYSTEM
 # ═══════════════════════════════════════════════════════════════════════
 def _update_sender_rep(sender_id: str, event_type: str):
@@ -1344,6 +1400,12 @@ def process_signal(text: str, source_type: str, source_name: str,
         "source_ts": source_ts if source_ts > 0 else 0,
         "latency_ms": latency_ms,
     }
+
+    # 8b. Token impact analysis — map event to specific crypto tokens
+    signal["token_impacts"] = _compute_token_impacts(
+        signal["event_type"], signal["direction"],
+        signal["magnitude"], tokens,
+    )
 
     # 9. Store
     with _state_lock:
@@ -2268,12 +2330,52 @@ def get_source_breakdown() -> dict:
 # ═══════════════════════════════════════════════════════════════════════
 #  DASHBOARD HTTP SERVER
 # ═══════════════════════════════════════════════════════════════════════
+def _diverse_recent_signals(max_total: int = 0, per_source: int = 0) -> list:
+    """Return recent signals with per-source diversity quotas.
+
+    Ensures minority sources (Finnhub, Polymarket, etc.) aren't buried
+    by high-volume sources (OpenNews).
+    """
+    if max_total <= 0:
+        max_total = getattr(C, "DASHBOARD_MAX_SIGNALS", 80)
+    if per_source <= 0:
+        per_source = getattr(C, "DASHBOARD_SOURCE_QUOTA", 5)
+
+    # Group signals by source_type (newest first)
+    by_source: dict[str, list] = {}
+    for s in reversed(_signals):
+        src = s.get("source_type", "unknown")
+        by_source.setdefault(src, []).append(s)
+
+    # Phase 1: Guarantee quota per source
+    result = []
+    used_ts = set()
+    for src, sigs in by_source.items():
+        for s in sigs[:per_source]:
+            result.append(s)
+            used_ts.add(s["ts"])
+
+    # Phase 2: Fill remaining slots by recency
+    remaining = max_total - len(result)
+    if remaining > 0:
+        for s in reversed(_signals):
+            if s["ts"] not in used_ts:
+                result.append(s)
+                remaining -= 1
+                if remaining <= 0:
+                    break
+
+    # Sort by timestamp descending (newest first)
+    result.sort(key=lambda s: s["ts"], reverse=True)
+    return result[:max_total]
+
+
 def _dashboard_api_data() -> dict:
     """Full dashboard state."""
     now = time.time()
     sent = get_sentiment(6)
     with _state_lock:
-        recent = list(reversed(_signals[-50:]))
+        recent = _diverse_recent_signals()
         stats_copy = dict(_stats)
         sources = dict(_source_status)
     return {

@@ -3,7 +3,7 @@ name: "macro-intelligence"
 version: "2.0.0"
 description: "Unified macro intelligence feed — reads 9+ sources, classifies events, scores sentiment, generates AI insights, exposes signals via HTTP API + WebSocket push + webhooks"
 author:
-  name: "victorlee"
+  name: "VibeCodeDaddy"
   github: "VibeCodeDaddy69"
 license: MIT
 category: trading-strategy
